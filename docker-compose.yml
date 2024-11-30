@@ -1,0 +1,142 @@
+services:
+  # Kafka Cluster Nodes
+  kafka-gen:
+    image: confluentinc/cp-kafka:7.3.3
+    hostname: kafka-gen
+    container_name: kafka-gen
+    user: root
+    volumes:
+      - ./scripts/create_cluster_id.sh:/tmp/create_cluster_id.sh
+      - ./clusterID:/tmp/clusterID
+    command: "bash -c '/tmp/create_cluster_id.sh'"
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.3.3
+    hostname: kafka1
+    container_name: kafka1
+    user: root
+    ports:
+      - "39092:39092"
+    environment:
+      KAFKA_LISTENERS: BROKER://kafka1:19092,EXTERNAL://0.0.0.0:39092,CONTROLLER://kafka1:9093
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka1:19092,EXTERNAL://host.docker.internal:39092
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_PROCESS_ROLES: 'controller,broker'
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_METADATA_LOG_SEGMENT_MS: 15000
+      KAFKA_METADATA_MAX_RETENTION_MS: 1200000
+      KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    volumes:
+      - kafka1-data:/var/lib/kafka/data
+      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./scripts/create_topic.sh:/tmp/create_topic.sh
+      - ./clusterID:/tmp/clusterID
+    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run & sleep 10 && /tmp/create_topic.sh kafka1:19092 customer_click_data_topic 3 3'"
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.3.3
+    hostname: kafka2
+    container_name: kafka2
+    user: root
+    ports:
+      - "39093:39093"
+    environment:
+      KAFKA_LISTENERS: BROKER://kafka2:19093,EXTERNAL://0.0.0.0:39093,CONTROLLER://kafka2:9093
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka2:19093,EXTERNAL://host.docker.internal:39093
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_PROCESS_ROLES: 'controller,broker'
+      KAFKA_NODE_ID: 2
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_METADATA_LOG_SEGMENT_MS: 15000
+      KAFKA_METADATA_MAX_RETENTION_MS: 1200000
+      KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    volumes:
+      - kafka2-data:/var/lib/kafka/data
+      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./clusterID:/tmp/clusterID
+    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.3.3
+    hostname: kafka3
+    container_name: kafka3
+    user: root
+    ports:
+      - "39094:39094"
+    environment:
+      KAFKA_LISTENERS: BROKER://kafka3:19094,EXTERNAL://0.0.0.0:39094,CONTROLLER://kafka3:9093
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka3:19094,EXTERNAL://host.docker.internal:39094
+      KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_PROCESS_ROLES: 'controller,broker'
+      KAFKA_NODE_ID: 3
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka1:9093,2@kafka2:9093,3@kafka3:9093'
+      KAFKA_METADATA_LOG_SEGMENT_MS: 15000
+      KAFKA_METADATA_MAX_RETENTION_MS: 1200000
+      KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    volumes:
+      - kafka3-data:/var/lib/kafka/data
+      - ./scripts/update_run.sh:/tmp/update_run.sh
+      - ./clusterID:/tmp/clusterID
+    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+
+  # Flink Part
+  jobmanager:
+    image: flink:1.20.0-scala_2.12
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    networks:
+      - kafka-flink-network
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+
+  taskmanager:
+    image: flink:1.20.0-scala_2.12
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    networks:
+      - kafka-flink-network
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+
+  sql-client:
+    image: flink:latest
+    command: bin/sql-client.sh
+    depends_on:
+      - jobmanager
+    networks:
+      - kafka-flink-network
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        rest.address: jobmanager
+
+networks:
+  kafka-flink-network:
+    driver: bridge
+
+volumes:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:

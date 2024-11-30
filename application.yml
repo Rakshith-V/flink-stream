@@ -1,0 +1,8 @@
+kafka:
+  broker: "localhost:39092,localhost:39093,localhost:39094"
+  topic: "customer_click_data_topic"
+csv_files:
+  - "PATH\\TO\\NOV.csv"
+  - "PATH\\TO\\OCT.csv"
+streaming:
+  delay: 1  # To simulate real-time streaming of messages
