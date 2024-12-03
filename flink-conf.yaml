@@ -1,0 +1,8 @@
+jobmanager:
+  rpc:
+    address: localhost
+    port: 6123
+
+rest:
+  address: localhost
+  port: 8081
