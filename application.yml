@@ -1,8 +1,15 @@
 kafka:
   broker: "localhost:39092,localhost:39093,localhost:39094"
   topic: "customer_click_data_topic"
+flink:
+  kafka_broker: "kafka1:19092,kafka2:19093,kafka3:19094"
+  consume_topic: "customer_click_data_topic"
+  produce_topic: "processed_customer_topic"
+  aggregation_window: 30
 csv_files:
   - "PATH\\TO\\NOV.csv"
   - "PATH\\TO\\OCT.csv"
 streaming:
-  delay: 1  # To simulate real-time streaming of messages
+  delay: 1 # Seconds between messages
+llm_endpoint:
+  url: https://localhost:8092/analyze

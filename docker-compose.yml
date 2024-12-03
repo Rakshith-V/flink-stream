@@ -5,6 +5,8 @@ services:
     hostname: kafka-gen
     container_name: kafka-gen
     user: root
+    networks:
+      - kafka-flink-network
     volumes:
       - ./scripts/create_cluster_id.sh:/tmp/create_cluster_id.sh
       - ./clusterID:/tmp/clusterID
@@ -31,12 +33,15 @@ services:
       KAFKA_METADATA_MAX_RETENTION_MS: 1200000
       KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    networks:
+      - kafka-flink-network
     volumes:
       - kafka1-data:/var/lib/kafka/data
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./scripts/create_topic.sh:/tmp/create_topic.sh
       - ./clusterID:/tmp/clusterID
-    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run & sleep 10 && /tmp/create_topic.sh kafka1:19092 customer_click_data_topic 3 3'"
+    command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
+    # sleep 10 && /tmp/create_topic.sh kafka1:19092 customer_click_data_topic 3 3'"
 
   kafka2:
     image: confluentinc/cp-kafka:7.3.3
@@ -59,6 +64,8 @@ services:
       KAFKA_METADATA_MAX_RETENTION_MS: 1200000
       KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    networks:
+      - kafka-flink-network
     volumes:
       - kafka2-data:/var/lib/kafka/data
       - ./scripts/update_run.sh:/tmp/update_run.sh
@@ -86,6 +93,8 @@ services:
       KAFKA_METADATA_MAX_RETENTION_MS: 1200000
       KAFKA_METADATA_LOG_MAX_RECORD_BYTES_BETWEEN_SNAPSHOTS: 2800
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+    networks:
+      - kafka-flink-network
     volumes:
       - kafka3-data:/var/lib/kafka/data
       - ./scripts/update_run.sh:/tmp/update_run.sh
@@ -94,7 +103,12 @@ services:
 
   # Flink Part
   jobmanager:
-    image: flink:1.20.0-scala_2.12
+    container_name: jobmanager
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: flink:1.20.0-scala_2.12
+    image: flink-python:1.20
     ports:
       - "8081:8081"
     command: jobmanager
@@ -106,7 +120,13 @@ services:
         jobmanager.rpc.address: jobmanager
 
   taskmanager:
-    image: flink:1.20.0-scala_2.12
+    container_name: taskmanager
+    # image: flink:1.20.0-scala_2.12
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: flink:1.20.0-scala_2.12
+    image: flink-python:1.20
     depends_on:
       - jobmanager
     command: taskmanager
