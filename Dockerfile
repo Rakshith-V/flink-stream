@@ -15,7 +15,7 @@ RUN pip install -r requirements.txt
 ENV PYTHONPATH=$PYTHONPATH:/opt/flink
 
 COPY aggregation_flink.py /opt/flink/jobs/aggregation_flink.py
-COPY application-ad.yml /opt/flink/jobs/application-ad.yml
+COPY application.yml /opt/flink/jobs/application.yml
 
 
 # Set up default command (if not already in your Dockerfile)

@@ -21,7 +21,7 @@ services:
       - "39092:39092"
     environment:
       KAFKA_LISTENERS: BROKER://kafka1:19092,EXTERNAL://0.0.0.0:39092,CONTROLLER://kafka1:9093
-      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka1:19092,EXTERNAL://host.docker.internal:39092
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka1:19092,EXTERNAL://localhost:39092 #host.docker.internal:39092
       KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -40,6 +40,7 @@ services:
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./scripts/create_topic.sh:/tmp/create_topic.sh
       - ./clusterID:/tmp/clusterID
+      - ./customer_producer.py:/tmp/customer_producer.py
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
     # sleep 10 && /tmp/create_topic.sh kafka1:19092 customer_click_data_topic 3 3'"
 
@@ -52,7 +53,7 @@ services:
       - "39093:39093"
     environment:
       KAFKA_LISTENERS: BROKER://kafka2:19093,EXTERNAL://0.0.0.0:39093,CONTROLLER://kafka2:9093
-      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka2:19093,EXTERNAL://host.docker.internal:39093
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka2:19093,EXTERNAL://localhost:39093
       KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -70,6 +71,7 @@ services:
       - kafka2-data:/var/lib/kafka/data
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./clusterID:/tmp/clusterID
+      - ./customer_producer.py:/tmp/customer_producer.py
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
 
   kafka3:
@@ -81,7 +83,7 @@ services:
       - "39094:39094"
     environment:
       KAFKA_LISTENERS: BROKER://kafka3:19094,EXTERNAL://0.0.0.0:39094,CONTROLLER://kafka3:9093
-      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka3:19094,EXTERNAL://host.docker.internal:39094
+      KAFKA_ADVERTISED_LISTENERS: BROKER://kafka3:19094,EXTERNAL://localhost:39094
       KAFKA_INTER_BROKER_LISTENER_NAME: BROKER
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,BROKER:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -99,6 +101,7 @@ services:
       - kafka3-data:/var/lib/kafka/data
       - ./scripts/update_run.sh:/tmp/update_run.sh
       - ./clusterID:/tmp/clusterID
+      - ./customer_producer.py:/tmp/customer_producer.py
     command: "bash -c '/tmp/update_run.sh && /etc/confluent/docker/run'"
 
   # Flink Part
@@ -114,6 +117,10 @@ services:
     command: jobmanager
     networks:
       - kafka-flink-network
+    volumes:
+      - ./customer_producer.py:/tmp/customer_producer.py
+      # - ./application-ad.yml:/tmp/application-ad.yml
+      - ./application.yml:/tmp/application.yml
     environment:
       - |
         FLINK_PROPERTIES=
