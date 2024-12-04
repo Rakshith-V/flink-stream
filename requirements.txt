@@ -3,3 +3,9 @@ apache_flink==1.20.0
 apache_flink_libraries==1.20.0
 PyYAML==6.0.2
 requests==2.32.3
+torch==2.0.1
+transformers==4.33.2
+langchain==0.0.229
+optimum==1.13.1
+auto-gptq==0.4.2
+langchain_community

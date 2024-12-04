@@ -1,14 +1,11 @@
 from flask import Flask, request, jsonify
 import json
 from werkzeug.exceptions import BadRequest
+from llm_process import process_prompt
 
 app = Flask(__name__)
 
-def llm_process(data):
-    print("Processing data:")
-    print(json.dumps(data, indent=2))
-    event_count = len(data)
-    return {"message": "Data processed successfully", "data_summary": f"Processed {event_count} items"}
+
 
 @app.route('/',methods = ["POST"])
 def processclaim():
@@ -16,7 +13,7 @@ def processclaim():
         if request.method == 'POST':
             data = request.get_json() 
             print(data)
-            response = llm_process(data)
+            response = process_prompt(data)
 
             return jsonify(response), 200
     except BadRequest as e:
