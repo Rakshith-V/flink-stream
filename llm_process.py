@@ -24,7 +24,27 @@ def process_prompt(data):
         generation_config=generation_config,
     )
     llm = HuggingFacePipeline(pipeline=text_pipeline, model_kwargs={"temperature": 0})
-    result = llm(
-        "consider the following table and suggest me 1 single product or row which has more chances of getting bought based on ant time stat: event_time event_type product_id category_id category_code brand price user_id user_session 2019-11-01 00:00:00 UTC view 1003461 2053013555631882655 electronics.smartphone xiaomi 489.07 520088904 4d3b30da-a5e4-49df-b1a8-ba5943f1dd33 2019-11-01 00:00:00 UTC view 5000088 2053013566100866035 appliances.sewing_machine janome 293.65 530496790 8e5f4f83-366c-4f70-860e-ca7417414283 2019-11-01 00:00:01 UTC view 17302664 2053013553853497655 creed 28.31 561587266 755422e7-9040-477b-9bd2-6a6e8fd97387 2019-11-01 00:00:01 UTC view 3601530 2053013563810775923 appliances.kitchen.washer lg 712.87 518085591 3bfb58cd-7892-48cc-8020-2f17e6de6e7f consider this table values and suggest me a product which has more chances of getting bought"
+
+    table_header = "event_time,event_type,product_id,category_id,category_code,brand,price,user_id,user_session\n"
+    table_rows = ""
+    for event in data:
+        row = "{event_time},{event_type},{product_id},{category_id},{category_code},{brand},{price},{user_id},<user_session_placeholder>\n".format(
+            event_time=event.get("event_time", ""),
+            event_type=event.get("event_type", ""),
+            product_id=event.get("product_id", ""),
+            category_id=event.get("category_id", ""),
+            category_code=event.get("category_code", ""),
+            brand=event.get("brand", ""),
+            price=event.get("price", ""),
+            user_id=event.get("user_id", ""),
+        )
+        table_rows += row
+
+    # Construct the prompt
+    prompt = (
+        "Consider the following table of user events:\n\n"
+        f"{table_header}{table_rows}\n"
+        "Based on this data, suggest one single product or row which has the highest chance of being purchased."
     )
-    print(result)
+    result = llm(prompt)
+    return result
