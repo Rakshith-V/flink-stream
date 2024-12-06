@@ -4,17 +4,24 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline, Generati
 import torch
 from langchain import HuggingFacePipeline
 
-app = Flask(__name__)
+import warnings
+warnings.filterwarnings("ignore")
 
-MODEL_NAME = "TheBloke/Llama-2-13b-Chat-GPTQ"
+app = Flask(__name__)
+print(torch.cuda.is_available())
+# MODEL_NAME = "TheBloke/Llama-2-13b-Chat-GPTQ"
+MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
+with open(".llm-token") as f:
+    AUTH_TOKEN = f.read()
 
 try:
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, use_fast=True, token=AUTH_TOKEN)
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_NAME,
         torch_dtype=torch.float16,
         trust_remote_code=True,
-        device_map="auto"
+        device_map="auto",
+        token=AUTH_TOKEN
     )
     generation_config = GenerationConfig.from_pretrained(MODEL_NAME)
     generation_config.max_new_tokens = 1024
@@ -57,8 +64,9 @@ def process_prompt(data):
     prompt = (
         "Consider the following table of user events:\n\n"
         f"{table_header}{table_rows}\n"
-        "Based on this data, suggest one single product or row which has the highest chance of being purchased."
-    )
+        "Based on this data, suggest one product per user_id that they should probably buy, based on what other users are looking at, maybe using the brand or categories of items. Return response in following format for each user_id: \n"
+        "For user_id {user_id}, I recommend going for this product: {product_id} from brand: {brand}. Replace the things in {} with the actual values."
+        )
 
     try:
         result = llm(prompt)
@@ -80,6 +88,7 @@ def process_events():
     
         if "error" in result:
             return jsonify(result), 400
+        print(jsonify(result).get_json())
         return jsonify(result), 200
 
     except BadRequest as e:

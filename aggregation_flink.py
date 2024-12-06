@@ -12,6 +12,8 @@ from pyflink.common.typeinfo import Types
 import requests
 import yaml
 import asyncio
+import warnings
+warnings.filterwarnings("ignore")
 
 CONFIG_FILE_PATH = "application.yml"
 

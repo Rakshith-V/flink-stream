@@ -7,9 +7,10 @@ flink:
   produce_topic: "processed_customer_topic"
   aggregation_window: 30
 csv_files:
-  - "PATH\\TO\\NOV.csv"
-  - "PATH\\TO\\OCT.csv"
+  - "C:\\Users\\arghy\\Downloads\\532_dataset\\2019_oct.csv"
+  - "C:\\Users\\arghy\\Downloads\\532_dataset\\2019_nov.csv"
 streaming:
-  delay: 1 # Seconds between messages
-llm_endpoint:
-  url: https://localhost:8092/analyze
+  delay: 1  # Seconds between messages
+llm:
+  url: http://localhost:5000/
+  topic: "processed_customer_topic"
