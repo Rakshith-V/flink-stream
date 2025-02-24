@@ -1,5 +1,7 @@
 # FlinkStream
 Repository to host code for Final Project for COMPSCI 532.
+Integrated Apache Kafka, Flink, and Meta’s Llama-2-13b) via LangChain to build a
+real-time e-commerce analytics system for processing customer data and generating actionable insights using GenAI
 
 Pre-requisites:
 1. Docker Desktop
